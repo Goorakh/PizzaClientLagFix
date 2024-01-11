@@ -28,7 +28,15 @@ namespace PizzaClientLagFix
 
                 for (int i = hitList.Count - 1; i >= 0; i--)
                 {
-                    if (!hitList[i].hurtBox.healthComponent.hasAuthority)
+                    HurtBox hurtBox = hitList[i].hurtBox;
+                    if (!hurtBox)
+                        continue;
+
+                    HealthComponent healthComponent = hurtBox.healthComponent;
+                    if (!healthComponent)
+                        continue;
+
+                    if (!healthComponent.hasAuthority)
                     {
 #if DEBUG
                         Log.Debug($"Removing hit {Util.GetBestBodyName(hitList[i].hurtBox.healthComponent.gameObject)}: not authority");
