@@ -29,3 +29,8 @@ Mod sequence of events:
     * Noticeable, but slight delay for the damage message to be received, depending on ping
     * Host receives damage message, deals damage, regardless of normal damage check
   * Everyone is happy :)
+
+#### Credits:
+Nuxlar: testing and mod icon
+
+Me: the rest
