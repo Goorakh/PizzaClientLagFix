@@ -39,7 +39,7 @@ namespace PizzaClientLagFix
                     if (!healthComponent.hasAuthority)
                     {
 #if DEBUG
-                        Log.Debug($"Removing hit {Util.GetBestBodyName(hitList[i].hurtBox.healthComponent.gameObject)}: not authority");
+                        Log.Debug($"Removing hit {Util.GetBestBodyName(healthComponent.gameObject)} ({healthComponent.netId}): not authority");
 #endif
 
                         hitList.RemoveAt(i);

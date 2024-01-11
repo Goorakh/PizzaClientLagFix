@@ -1,4 +1,5 @@
-﻿using RoR2;
+﻿using Rewired.ComponentControls.Effects;
+using RoR2;
 using RoR2.Projectile;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -7,6 +8,72 @@ namespace PizzaClientLagFix
 {
     class ProjectileOverlapAttackClientPrediction : NetworkBehaviour
     {
+        [SystemInitializer]
+        static void Init()
+        {
+            On.RoR2.Projectile.ProjectileController.Awake += (orig, self) =>
+            {
+                orig(self);
+
+                if (self.GetComponent<ProjectileOverlapAttack>())
+                {
+                    if (self.GetComponent<RotateAroundAxis>() || self.catalogIndex == ProjectileCatalog.FindProjectileIndex("BrotherSunderWave"))
+                    {
+                        self.gameObject.AddComponent<ProjectileOverlapAttackClientPrediction>();
+                    }
+                }
+            };
+
+            On.RoR2.Projectile.ProjectileOverlapAttack.FixedUpdate += (orig, self) =>
+            {
+                ProjectileOverlapAttackClientPrediction clientPrediction = self.GetComponent<ProjectileOverlapAttackClientPrediction>();
+
+                OverlapAttackIgnoreNonAuthorityHitsPatch.Enabled = clientPrediction;
+                try
+                {
+                    orig(self);
+                }
+                finally
+                {
+                    OverlapAttackIgnoreNonAuthorityHitsPatch.Enabled = false;
+                }
+
+                if (clientPrediction && !NetworkServer.active && NetworkClient.active)
+                {
+#pragma warning disable Publicizer001 // Accessing a member that was not originally public
+                    if (self.resetInterval >= 0f)
+                    {
+                        self.resetTimer -= Time.fixedDeltaTime;
+                        if (self.resetTimer <= 0f)
+                        {
+                            self.resetTimer = self.resetInterval;
+                            self.ResetOverlapAttack();
+                        }
+                    }
+
+                    self.fireTimer -= Time.fixedDeltaTime;
+
+                    if (self.fireTimer <= 0f)
+                    {
+                        self.fireTimer = 1f / self.fireFrequency;
+
+                        clientPrediction.SetOverlapAttackValuesFromServer(self.attack);
+
+                        OverlapAttackIgnoreNonAuthorityHitsPatch.Enabled = true;
+                        try
+                        {
+                            self.attack.Fire(null);
+                        }
+                        finally
+                        {
+                            OverlapAttackIgnoreNonAuthorityHitsPatch.Enabled = false;
+                        }
+                    }
+#pragma warning restore Publicizer001 // Accessing a member that was not originally public
+                }
+            };
+        }
+
         GameObject _attacker;
         NetworkInstanceId _attackerNetId;
 

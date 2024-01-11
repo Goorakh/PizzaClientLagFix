@@ -30,6 +30,8 @@ Mod sequence of events:
     * Host receives damage message, deals damage, regardless of normal damage check
   * Everyone is happy :)
 
+Mithrix's shockwaves are also given this same fix
+
 #### Credits:
 Nuxlar: testing and mod icon
 
