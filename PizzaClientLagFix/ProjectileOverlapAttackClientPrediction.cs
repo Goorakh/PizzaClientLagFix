@@ -17,7 +17,9 @@ namespace PizzaClientLagFix
 
                 if (self.GetComponent<ProjectileOverlapAttack>())
                 {
-                    if (self.GetComponent<RotateAroundAxis>() || self.catalogIndex == ProjectileCatalog.FindProjectileIndex("BrotherSunderWave"))
+                    if (self.catalogIndex == ProjectileCatalog.FindProjectileIndex("BrotherUltLineProjectileRotateLeft") ||
+                        self.catalogIndex == ProjectileCatalog.FindProjectileIndex("BrotherUltLineProjectileRotateRight") ||
+                        self.catalogIndex == ProjectileCatalog.FindProjectileIndex("BrotherSunderWave"))
                     {
                         self.gameObject.AddComponent<ProjectileOverlapAttackClientPrediction>();
                     }
