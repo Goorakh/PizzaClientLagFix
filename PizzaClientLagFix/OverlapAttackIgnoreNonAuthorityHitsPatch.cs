@@ -1,11 +1,31 @@
 ﻿using RoR2;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Networking;
 
 namespace PizzaClientLagFix
 {
     public static class OverlapAttackIgnoreNonAuthorityHitsPatch
     {
+#if DEBUG
+        enum DebugMode
+        {
+            None,
+            IgnoreServer,
+            IgnoreClient
+        }
+
+        static DebugMode _debugMode = DebugMode.None;
+
+        [ConCommand(commandName = "overlap_authority_debug_mode")]
+        static void CCSetDebugMode(ConCommandArgs args)
+        {
+            _debugMode = args.GetArgEnum<DebugMode>(0);
+
+            UnityEngine.Debug.Log($"Overlap authority debug mode: {_debugMode}");
+        }
+#endif
+
         public static bool Enabled;
 
         [SystemInitializer]
@@ -21,6 +41,26 @@ namespace PizzaClientLagFix
                 orig(self, boxedHitList);
                 return;
             }
+            
+#if DEBUG
+            switch (_debugMode)
+            {
+                case DebugMode.None:
+                    break;
+                case DebugMode.IgnoreServer:
+                    if (NetworkServer.active)
+                        return;
+
+                    break;
+                case DebugMode.IgnoreClient:
+                    if (!NetworkServer.active)
+                        return;
+
+                    break;
+                default:
+                    throw new NotImplementedException($"Debug mode {_debugMode} is not implemented");
+            }
+#endif
 
             try
             {
@@ -36,7 +76,7 @@ namespace PizzaClientLagFix
                     if (!healthComponent)
                         continue;
 
-                    if (!healthComponent.hasAuthority)
+                    if (!Util.HasEffectiveAuthority(healthComponent.gameObject))
                     {
 #if DEBUG
                         Log.Debug($"Removing hit {Util.GetBestBodyName(healthComponent.gameObject)} ({healthComponent.netId}): not authority");
