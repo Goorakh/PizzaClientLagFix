@@ -1,3 +1,7 @@
+**?.?.? Changes:**
+
+* Fixed for SotS
+
 **1.2.1 Changes:**
 
 * Fixed drones not taking any damage from pizza or shockwaves

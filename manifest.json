@@ -7,6 +7,6 @@
 	"description": "Fixes unpredictable multiplayer lag for Mithrix's pizza (big spinny) attack",
 	"dependencies": [
 		"bbepis-BepInExPack-5.4.2113",
-		"RiskofThunder-HookGenPatcher-1.2.3"
+		"RiskofThunder-HookGenPatcher-1.2.4"
 	]
 }
