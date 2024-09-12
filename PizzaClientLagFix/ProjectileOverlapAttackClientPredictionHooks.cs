@@ -90,7 +90,7 @@ namespace PizzaClientLagFix
                         clientPrediction.UpdateClientAttackInfo();
                     }
 
-                    OverlapAttackIgnoreNonAuthorityHitsPatch.Enabled = true;
+                    OverlapAttackIgnoreNonAuthorityHitsPatch.Enabled = clientPrediction;
                 }
 
                 c.Index++;
