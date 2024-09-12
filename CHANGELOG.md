@@ -1,3 +1,7 @@
+**1.3.1 Changes:**
+
+* Fixed an issue where certain attacks would not deal damage for non-host players
+
 **1.3.0 Changes:**
 
 * Fixed for SotS
