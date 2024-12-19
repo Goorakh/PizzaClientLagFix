@@ -4,7 +4,6 @@ using PizzaClientLagFix.Networking;
 using RoR2;
 using RoR2.Projectile;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace PizzaClientLagFix
 {
@@ -16,22 +15,29 @@ namespace PizzaClientLagFix
             On.RoR2.Projectile.ProjectileOverlapAttack.MyFixedUpdate += ProjectileOverlapAttack_MyFixedUpdate_EnsurePatchDisabled;
             IL.RoR2.Projectile.ProjectileOverlapAttack.MyFixedUpdate += ProjectileOverlapAttack_MyFixedUpdate_AllowClientPrediction;
 
-            tryAddToProjectile("BrotherUltLineProjectileRotateLeft");
-            tryAddToProjectile("BrotherUltLineProjectileRotateRight");
-            tryAddToProjectile("BrotherSunderWave");
+            addPredictionToProjectile("BrotherUltLineProjectileRotateLeft");
+            addPredictionToProjectile("BrotherUltLineProjectileRotateRight");
+            addPredictionToProjectile("BrotherUltLineProjectileStatic");
+            addPredictionToProjectile("BrotherSunderWave");
 
-            static void tryAddToProjectile(string projectileName)
+            static void addPredictionToProjectile(string projectileName)
             {
-                int projectileIndex = ProjectileCatalog.FindProjectileIndex(projectileName);
-                if (projectileIndex >= 0)
-                {
-                    GameObject projectilePrefab = ProjectileCatalog.GetProjectilePrefab(projectileIndex);
-                    projectilePrefab.AddComponent<ProjectileOverlapAttackClientPrediction>();
-                }
-                else
+                if (!tryAddPredictionToProjectile(projectileName))
                 {
                     Log.Error($"Failed to find projectile '{projectileName}'");
                 }
+            }
+
+            static bool tryAddPredictionToProjectile(string projectileName)
+            {
+                int projectileIndex = ProjectileCatalog.FindProjectileIndex(projectileName);
+                if (projectileIndex < 0)
+                    return false;
+
+                GameObject projectilePrefab = ProjectileCatalog.GetProjectilePrefab(projectileIndex);
+                projectilePrefab.AddComponent<ProjectileOverlapAttackValueNetworker>();
+                projectilePrefab.AddComponent<ProjectileOverlapAttackClientPrediction>();
+                return true;
             }
         }
 
@@ -58,25 +64,32 @@ namespace PizzaClientLagFix
             c.EmitDelegate(getClientPrediction);
             static ProjectileOverlapAttackClientPrediction getClientPrediction(ProjectileOverlapAttack projectileOverlapAttack)
             {
-                return !NetworkServer.active && NetworkClient.active ? projectileOverlapAttack.GetComponent<ProjectileOverlapAttackClientPrediction>() : null;
+                return projectileOverlapAttack.GetComponent<ProjectileOverlapAttackClientPrediction>();
             }
 
             c.Emit(OpCodes.Stloc, clientPredictionComponentVar);
 
-            if (c.TryGotoNext(MoveType.After,
-                              x => x.MatchCallOrCallvirt<ProjectileController>(nameof(ProjectileController.CanProcessCollisionEvents))))
+            int shouldProccessAttacksVar = -1;
+            ILLabel afterCanProcessCheckLabel = null;
+            if (!c.TryGotoNext(x => x.MatchCallOrCallvirt<ProjectileController>(nameof(ProjectileController.CanProcessCollisionEvents)),
+                              x => x.MatchStloc(out shouldProccessAttacksVar),
+                              x => x.MatchBr(out afterCanProcessCheckLabel)))
             {
-                c.Emit(OpCodes.Ldloc, clientPredictionComponentVar);
-                c.EmitDelegate(overrideShouldProcess);
-                static bool overrideShouldProcess(bool canProcess, ProjectileOverlapAttackClientPrediction clientPrediction)
-                {
-                    return canProcess || clientPrediction;
-                }
+                Log.Error("Failed to find initial patch location");
+                return;
             }
-            else
+
+            c.Goto(afterCanProcessCheckLabel.Target, MoveType.AfterLabel);
+
+            c.Emit(OpCodes.Ldloc, shouldProccessAttacksVar);
+            c.Emit(OpCodes.Ldloc, clientPredictionComponentVar);
+            c.EmitDelegate(overrideShouldProcessAttack);
+            static bool overrideShouldProcessAttack(bool shouldProccessAttacks, ProjectileOverlapAttackClientPrediction clientPrediction)
             {
-                Log.Error("Failed to find process events patch location");
+                return shouldProccessAttacks || clientPrediction;
             }
+
+            c.Emit(OpCodes.Stloc, shouldProccessAttacksVar);
 
             if (c.TryGotoNext(MoveType.Before,
                               x => x.MatchCallOrCallvirt<OverlapAttack>(nameof(OverlapAttack.Fire))))
@@ -85,11 +98,6 @@ namespace PizzaClientLagFix
                 c.EmitDelegate(preFire);
                 static void preFire(ProjectileOverlapAttackClientPrediction clientPrediction)
                 {
-                    if (clientPrediction)
-                    {
-                        clientPrediction.UpdateClientAttackInfo();
-                    }
-
                     OverlapAttackIgnoreNonAuthorityHitsPatch.Enabled = clientPrediction;
                 }
 

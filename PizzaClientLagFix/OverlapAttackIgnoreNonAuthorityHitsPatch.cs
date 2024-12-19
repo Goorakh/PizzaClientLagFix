@@ -66,12 +66,10 @@ namespace PizzaClientLagFix
             {
                 List<OverlapAttack.OverlapInfo> hitList = (List<OverlapAttack.OverlapInfo>)boxedHitList;
 
-#if DEBUG
                 if (hitList.Count > 0)
                 {
                     Log.Debug($"OverlapAttack: attacker={self.attacker}, inflictor={self.inflictor}, damage={self.damage}, damageType={self.damageType}");
                 }
-#endif
 
                 for (int i = hitList.Count - 1; i >= 0; i--)
                 {
@@ -86,7 +84,13 @@ namespace PizzaClientLagFix
                     if (!Util.HasEffectiveAuthority(healthComponent.gameObject))
                     {
 #if DEBUG
-                        LocalUser localUser = healthComponent.body?.master?.playerCharacterMasterController?.networkUser?.localUser;
+                        LocalUser localUser = null;
+                        NetworkUser networkUser = Util.LookUpBodyNetworkUser(healthComponent.gameObject);
+                        if (networkUser)
+                        {
+                            localUser = networkUser.localUser;
+                        }
+
                         Log.Debug($"Removing hit {Util.GetBestBodyName(healthComponent.gameObject)} ({healthComponent.netId}) (localUser={localUser?.id}): not authority");
 #endif
 
