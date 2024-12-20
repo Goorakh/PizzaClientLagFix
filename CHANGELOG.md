@@ -4,6 +4,9 @@
 
 * Fixed non-rotating Pizza variant not having the lag fix
 
+* Mod Compatibility:
+  * Fixed certain attacks from Umbral Mithrix not having the lag fix
+
 **1.3.1 Changes:**
 
 * Fixed an issue where certain attacks would not deal damage for non-host players

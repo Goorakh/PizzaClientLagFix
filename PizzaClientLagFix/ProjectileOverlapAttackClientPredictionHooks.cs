@@ -1,8 +1,12 @@
-﻿using Mono.Cecil.Cil;
+﻿using BepInEx;
+using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using PizzaClientLagFix.ModCompat;
 using PizzaClientLagFix.Networking;
 using RoR2;
 using RoR2.Projectile;
+using System;
+using System.Reflection;
 using UnityEngine;
 
 namespace PizzaClientLagFix
@@ -20,6 +24,60 @@ namespace PizzaClientLagFix
             addPredictionToProjectile("BrotherUltLineProjectileStatic");
             addPredictionToProjectile("BrotherSunderWave");
 
+            if (UmbralMithrixCompat.Enabled)
+            {
+                bool failedP4LineLeft = !tryAddPredictionToProjectile("P4UltLineLeft");
+                bool failedP4LineRight = !tryAddPredictionToProjectile("P4UltLineRight");
+                bool failedStaticUlt = !tryAddPredictionToProjectile("StaticUltLine");
+
+                if (failedP4LineLeft || failedP4LineRight || failedStaticUlt)
+                {
+                    PluginInfo umbralPluginInfo = UmbralMithrixCompat.UmbralPluginInfo.Value;
+                    if (umbralPluginInfo != null)
+                    {
+                        BaseUnityPlugin umbralPluginInstance = umbralPluginInfo.Instance;
+                        if (umbralPluginInstance)
+                        {
+                            Type umbralPluginType = umbralPluginInstance.GetType();
+
+                            if (failedP4LineLeft)
+                                tryAddPredictionToUmbralField("leftP4Line");
+
+                            if (failedP4LineRight)
+                                tryAddPredictionToUmbralField("rightP4Line");
+
+                            if (failedStaticUlt)
+                                tryAddPredictionToUmbralField("staticUltLine");
+
+                            void tryAddPredictionToUmbralField(string fieldName)
+                            {
+                                FieldInfo fieldInfo = umbralPluginType.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
+                                if (fieldInfo == null)
+                                {
+                                    Log.Error($"Failed to find umbral field '{fieldName}'");
+                                    return;
+                                }
+
+                                object fieldValue = fieldInfo.GetValue(umbralPluginInstance);
+                                if (fieldValue is not GameObject gameObjectFieldValue)
+                                {
+                                    string valueTypeName = "null";
+                                    if (fieldValue != null)
+                                    {
+                                        valueTypeName = fieldValue.GetType().FullName;
+                                    }
+
+                                    Log.Error($"Unexpected type {valueTypeName} of umbral field '{fieldInfo.Name}'");
+                                    return;
+                                }
+
+                                addPredictionToPrefab(gameObjectFieldValue);
+                            }
+                        }
+                    }
+                }
+            }
+
             static void addPredictionToProjectile(string projectileName)
             {
                 if (!tryAddPredictionToProjectile(projectileName))
@@ -35,9 +93,16 @@ namespace PizzaClientLagFix
                     return false;
 
                 GameObject projectilePrefab = ProjectileCatalog.GetProjectilePrefab(projectileIndex);
-                projectilePrefab.AddComponent<ProjectileOverlapAttackValueNetworker>();
-                projectilePrefab.AddComponent<ProjectileOverlapAttackClientPrediction>();
+                addPredictionToPrefab(projectilePrefab);
                 return true;
+            }
+
+            static void addPredictionToPrefab(GameObject prefab)
+            {
+                prefab.AddComponent<ProjectileOverlapAttackValueNetworker>();
+                prefab.AddComponent<ProjectileOverlapAttackClientPrediction>();
+
+                Log.Debug($"Added client prediction to {prefab}");
             }
         }
 
