@@ -5,7 +5,7 @@ using UnityEngine.Networking;
 
 namespace PizzaClientLagFix.Networking
 {
-    public class ProjectileOverlapAttackValueNetworker : NetworkBehaviour
+    public sealed class ProjectileOverlapAttackValueNetworker : NetworkBehaviour
     {
         ProjectileController _projectileController;
         ProjectileDamage _projectileDamage;

@@ -2,7 +2,7 @@
 
 namespace PizzaClientLagFix.Networking
 {
-    public class ProjectileOverlapAttackClientPrediction : MonoBehaviour
+    public sealed class ProjectileOverlapAttackClientPrediction : MonoBehaviour
     {
     }
 }

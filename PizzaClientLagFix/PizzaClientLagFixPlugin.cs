@@ -4,14 +4,14 @@ using System.Diagnostics;
 namespace PizzaClientLagFix
 {
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
-    public class Main : BaseUnityPlugin
+    public sealed class PizzaClientLagFixPlugin : BaseUnityPlugin
     {
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "Gorakh";
         public const string PluginName = "PizzaClientLagFix";
         public const string PluginVersion = "1.3.2";
 
-        internal static Main Instance { get; private set; }
+        internal static PizzaClientLagFixPlugin Instance { get; private set; }
 
         void Awake()
         {

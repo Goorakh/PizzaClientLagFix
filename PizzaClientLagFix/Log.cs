@@ -28,7 +28,7 @@ namespace PizzaClientLagFix
                 }
                 else
                 {
-                    UnityEngine.Debug.LogError($"[{Main.PluginName}] Logger failed to determine caller path prefix length");
+                    UnityEngine.Debug.LogError($"[{PizzaClientLagFixPlugin.PluginName}] Logger failed to determine caller path prefix length");
                     return 0;
                 }
             }
