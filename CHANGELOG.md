@@ -1,3 +1,7 @@
+**1.3.3 Changes:**
+
+* Fixed for Alloyed Collective v1.4.1 patch
+
 **1.3.2 Changes:**
 
 * Fixed for SotS Items & Elites patch

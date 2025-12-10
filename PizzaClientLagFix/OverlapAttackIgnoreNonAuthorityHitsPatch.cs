@@ -34,11 +34,11 @@ namespace PizzaClientLagFix
             On.RoR2.OverlapAttack.ProcessHits += OverlapAttack_ProcessHits;
         }
 
-        static void OverlapAttack_ProcessHits(On.RoR2.OverlapAttack.orig_ProcessHits orig, OverlapAttack self, object boxedHitList)
+        static void OverlapAttack_ProcessHits(On.RoR2.OverlapAttack.orig_ProcessHits orig, OverlapAttack self, List<OverlapAttack.OverlapInfo> hitList)
         {
             if (!Enabled)
             {
-                orig(self, boxedHitList);
+                orig(self, hitList);
                 return;
             }
             
@@ -64,8 +64,6 @@ namespace PizzaClientLagFix
 
             try
             {
-                List<OverlapAttack.OverlapInfo> hitList = (List<OverlapAttack.OverlapInfo>)boxedHitList;
-
                 if (hitList.Count > 0)
                 {
                     Log.Debug($"OverlapAttack: attacker={self.attacker}, inflictor={self.inflictor}, damage={self.damage}, damageType={self.damageType}");
@@ -97,14 +95,13 @@ namespace PizzaClientLagFix
                         hitList.RemoveAt(i);
                     }
                 }
-
-                orig(self, hitList);
             }
             catch (Exception e)
             {
                 Log.Error_NoCallerPrefix(e);
-                orig(self, boxedHitList);
             }
+
+            orig(self, hitList);
         }
     }
 }

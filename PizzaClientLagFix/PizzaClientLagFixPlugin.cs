@@ -9,7 +9,7 @@ namespace PizzaClientLagFix
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "Gorakh";
         public const string PluginName = "PizzaClientLagFix";
-        public const string PluginVersion = "1.3.2";
+        public const string PluginVersion = "1.3.3";
 
         internal static PizzaClientLagFixPlugin Instance { get; private set; }
 
