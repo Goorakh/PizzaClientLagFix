@@ -23,57 +23,64 @@ namespace PizzaClientLagFix
             addPredictionToProjectile("BrotherUltLineProjectileRotateRight");
             addPredictionToProjectile("BrotherUltLineProjectileStatic");
             addPredictionToProjectile("BrotherSunderWave");
+            addPredictionToProjectile("BrotherSunderWave, Energized");
 
             if (UmbralMithrixCompat.Enabled)
             {
-                bool failedP4LineLeft = !tryAddPredictionToProjectile("P4UltLineLeft");
-                bool failedP4LineRight = !tryAddPredictionToProjectile("P4UltLineRight");
-                bool failedStaticUlt = !tryAddPredictionToProjectile("StaticUltLine");
+                BaseUnityPlugin umbralPluginInstance = UmbralMithrixCompat.UmbralPluginInfo.Value?.Instance;
+                Type umbralPluginType = umbralPluginInstance?.GetType();
 
-                if (failedP4LineLeft || failedP4LineRight || failedStaticUlt)
+                tryAddPredictionToUmbralProjectile("UmbralUltLineLeft", "leftUltLine");
+                tryAddPredictionToUmbralProjectile("P4UltLineLeft", "leftP4Line");
+                tryAddPredictionToUmbralProjectile("StaticUltLine", "staticUltLine");
+                tryAddPredictionToUmbralProjectile("UmbralUltLineRight", "rightUltLine");
+                tryAddPredictionToUmbralProjectile("P4UltLineRight", "rightP4Line");
+                tryAddPredictionToUmbralProjectile("UmbralLeapWave", "umbralLeapWave");
+
+                void tryAddPredictionToUmbralProjectile(string projectileName, string projectileFieldName)
                 {
-                    PluginInfo umbralPluginInfo = UmbralMithrixCompat.UmbralPluginInfo.Value;
-                    if (umbralPluginInfo != null)
+                    if (tryAddPredictionToProjectile(projectileName))
                     {
-                        BaseUnityPlugin umbralPluginInstance = umbralPluginInfo.Instance;
-                        if (umbralPluginInstance)
+                        return;
+                    }
+
+                    Log.Warning($"Failed to find umbral projectile '{projectileName}', attempting to retrieve from field");
+
+                    try
+                    {
+                        const BindingFlags FieldFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
+                        FieldInfo fieldInfo = umbralPluginType?.GetField(projectileFieldName, FieldFlags);
+                        if (fieldInfo == null)
                         {
-                            Type umbralPluginType = umbralPluginInstance.GetType();
-
-                            if (failedP4LineLeft)
-                                tryAddPredictionToUmbralField("leftP4Line");
-
-                            if (failedP4LineRight)
-                                tryAddPredictionToUmbralField("rightP4Line");
-
-                            if (failedStaticUlt)
-                                tryAddPredictionToUmbralField("staticUltLine");
-
-                            void tryAddPredictionToUmbralField(string fieldName)
-                            {
-                                FieldInfo fieldInfo = umbralPluginType.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-                                if (fieldInfo == null)
-                                {
-                                    Log.Error($"Failed to find umbral field '{fieldName}'");
-                                    return;
-                                }
-
-                                object fieldValue = fieldInfo.GetValue(umbralPluginInstance);
-                                if (fieldValue is not GameObject gameObjectFieldValue)
-                                {
-                                    string valueTypeName = "null";
-                                    if (fieldValue != null)
-                                    {
-                                        valueTypeName = fieldValue.GetType().FullName;
-                                    }
-
-                                    Log.Error($"Unexpected type {valueTypeName} of umbral field '{fieldInfo.Name}'");
-                                    return;
-                                }
-
-                                addPredictionToPrefab(gameObjectFieldValue);
-                            }
+                            Log.Error($"Failed to find umbral field '{projectileFieldName}'");
+                            return;
                         }
+
+                        object fieldValue = fieldInfo.GetValue(fieldInfo.IsStatic ? null : umbralPluginInstance);
+                        if (fieldValue is not GameObject gameObjectFieldValue)
+                        {
+                            string valueTypeName = fieldInfo.FieldType.FullName;
+                            if (fieldValue != null)
+                            {
+                                valueTypeName = fieldValue.GetType().FullName;
+                            }
+
+                            Log.Error($"Unexpected type {valueTypeName} of umbral field '{fieldInfo.Name}'");
+                            return;
+                        }
+
+                        if (gameObjectFieldValue.name != projectileName)
+                        {
+                            Log.Error($"Found projectile field does not match projectile name: {gameObjectFieldValue}, expected {projectileName} ({projectileFieldName})");
+                            return;
+                        }
+
+                        addPredictionToPrefab(gameObjectFieldValue);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error_NoCallerPrefix($"Failed to find find umbral projectile '{projectileName}' from field '{projectileFieldName}': {e}");
+                        return;
                     }
                 }
             }
@@ -102,7 +109,7 @@ namespace PizzaClientLagFix
                 prefab.AddComponent<ProjectileOverlapAttackValueNetworker>();
                 prefab.AddComponent<ProjectileOverlapAttackClientPrediction>();
 
-                Log.Debug($"Added client prediction to {prefab}");
+                Log.Info($"Added client prediction to {prefab}");
             }
         }
 
