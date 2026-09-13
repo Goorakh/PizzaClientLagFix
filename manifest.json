@@ -1,7 +1,7 @@
 ﻿{
 	"name": "PizzaClientLagFix",
 	"author": "Gorakh",
-	"version_number": "1.3.3",
+	"version_number": "1.3.4",
 	"website_url": "https://github.com/Goorakh/PizzaClientLagFix",
 	"description": "Fixes unpredictable multiplayer lag for Mithrix's pizza (big spinny) attack",
 	"dependencies": [

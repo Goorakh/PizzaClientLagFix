@@ -1,3 +1,7 @@
+**1.3.4 Changes:**
+
+* Fixed Umbral Mithrix pizza/shockwaves not having the lag fix.
+
 **1.3.3 Changes:**
 
 * Fixed for Alloyed Collective v1.4.1 patch
